@@ -38,48 +38,120 @@
 
 ## What is this
 
-Scrap Yard for Claude Code does the job you pay ScrapRight for, as a Postgres database and a set of agent commands. There is no web front end. You open the folder in [Claude Code](https://claude.com/claude-code) (or Codex, OpenCode, Cursor: see `AGENTS.md`) and ask for what you want in plain language. It runs the right query, and it can answer questions the ScrapRight dashboard cannot.
+Scrap Yard for Claude Code runs a scrap metal yard's office: sellers and their ID, weigh tickets, grades and the price board, copper holds, yard stock, buyer contracts and the loads and containers that fill them. It is a Postgres database and a set of agent commands. There is no web front end. You open the folder in [Claude Code](https://claude.com/claude-code) (or Codex, OpenCode, Cursor: see `AGENTS.md`) and ask in plain language.
 
-<!-- TODO(author): the annual bill. One sentence: what a 10 to 50 person business typically pays ScrapRight per year, all in, with a source. -->
+ScrapRight is now part of ReSpark, which prices per location per month by custom quote, with dispatch, rail, exports and equipment maintenance sold as standalone products ([respark.com/pricing](https://respark.com/pricing), read 16 November 2026). No figure is published.
 
-Want the same thing with a web front end, or built on a different stack? That is a customisation, and it is exactly what Enterprise DNA does: [book a call](https://enterprisedna.co/omni/book/?utm_source=github&utm_medium=readme&utm_campaign=scrapright).
+It is for scrap metal yards in New Zealand and Australia, one yard or several, that buy from the public and from trade, sell to mills and exporters, and have to show the police a clean dealer record. The New Zealand copper rules and the NSW and Victorian cash bans are built in.
 
-<!-- TODO(author): two or three sentences on what this specific product covers and who it is for. -->
+Want the same thing with a weighbridge connection, a counter app with a camera, or a web front end? That is a customisation, and it is what Enterprise DNA does: [book a call](https://enterprisedna.co/omni/book/?utm_source=github&utm_medium=readme&utm_campaign=scrapright).
 
 ## Why no front end
 
 - The front end was only ever there because the database was hard to talk to. That is no longer true.
-- Your data sits in plain Postgres tables you own. Any tool can read them. No export, no lock-in.
-- No seats, no tiers, no add-ons. Read [docs/why-no-front-end.md](docs/why-no-front-end.md) for the honest trade-offs too.
+- Your tickets and seller records sit in plain Postgres tables you own. Any tool can read them. No export fee, no lock-in.
+- No per-location fee, no modules. Read [docs/why-no-front-end.md](docs/why-no-front-end.md) for what a screen still gives you.
 
 ## Quick start
 
-Sixty seconds, no database install (an embedded Postgres runs inside Node):
+Sixty seconds, no database install (an embedded Postgres runs inside Node 20 or later):
 
 ```bash
 git clone https://github.com/Enterprise-DNA-OS/scrap-yard-for-claude-code.git
 cd scrap-yard-for-claude-code
 npm install
+npm test
 npm run demo
+npm run scrap -- attention
 ```
 
-Then open the folder in Claude Code and type a slash command. <!-- TODO(author): name the first command to try. -->
+Then open the folder in Claude Code and type `/attention`. The demo is four fictional yards in Auckland, Christchurch, Sydney and Melbourne, with a cash payment for steel in Sydney, a seller with no ID on file, a car body bought with no VIN, copper in Auckland cut up nine days into its 14-day hold, bright copper in Melbourne released with no photo, a banned seller who still got a ticket, a public seller who has sold copper six times in a month, an export contract 106 tonnes short with ten days to go, and stainless sitting in the yard for 78 days.
+
+Seed only an empty demo database. On Postgres, `npm run seed -- --demo-database` is required on purpose.
 
 ### Use it with your own Postgres or Supabase
 
-Copy `.env.example` to `.env`, set `DATABASE_URL`, then `npm run migrate`. Same commands, shared data, no per-seat fee.
+Copy `.env.example` to `.env`, set `DATABASE_URL`, then `npm run migrate`. Same commands, shared data, no per-seat fee. Seller ID records are personal information under the Privacy Act 2020 (NZ) and the Privacy Act 1988 (Cth): set up controlled access and backups before shared use.
 
 ## The commands
 
-<!-- TODO(author): a table of the slash commands in .claude/commands and what each one does. -->
+The weekly rituals:
 
 | Command | What it does |
 |---|---|
-| `/...` | ... |
+| `/attention` | Everything in breach, on hold, unpaid, short, stale or worth a look, in one list |
+| `/weekly-review` | Writes the Monday review to `drafts/`: compliance, money waiting, holds, contracts, stock and margin |
+| `/compliance` | Checks the records against six NZ, NSW and Victorian rules, each cited in [docs/compliance.md](docs/compliance.md) |
+| `/price-board` | Today's buy price per grade at each yard, public and trade, and how old each price is |
+| `/day-end` | One day at each yard: tickets, kilograms, paid by EFT, cheque and cash, still open |
+| `/held` | Copper and other goods on hold, and the date each can be cut, baled or sold |
+| `/yard-stock` | Kilograms on hand by yard and grade, with average cost and days since it moved |
+| `/stale-stock` | Grades sitting 45 days or more, and the money tied up |
+| `/contracts` | Open sale contracts: shipped, remaining, in the yards, and the ones that are short |
+| `/margin` | Average buy and sell price per tonne for each grade over 30 days |
+| `/seller-watch` | Public sellers bringing copper again and again, big public sellers, banned sellers |
+| `/unpaid` | Tickets weighed but not paid |
+| `/tickets`, `/ticket` | Recent tickets by yard, seller or status, and one ticket with its holds |
+| `/seller` | One seller: ID, tickets, copper pattern and notes |
+| `/dealer-register` | The dealer record, one row per line, in the order police ask for it |
+
+Records and paperwork:
+
+| Command | What it does |
+|---|---|
+| `/add-ticket`, `/add-line` | Weigh in at the board price. Refuses a banned seller, a seller with no ID or address, and a vehicle with no VIN |
+| `/pay` | Mark a ticket paid. Refuses cash where the law bans it |
+| `/release` | Release a held line for processing. Refuses inside the hold |
+| `/void` | Void a ticket with a reason; it stays on record |
+| `/add-seller`, `/update-seller` | Add a seller with ID, record missing details, ban or unban with a reason |
+| `/set-price`, `/add-grade` | Change the price board, add a grade |
+| `/add-contract`, `/add-load` | Record a sale contract, and each truck or container that ships against it |
+| `/log` | A note, call or police enquiry against a seller |
+| `/draft-register` | The dealer register for a date range as a CSV, for an inspection |
+| `/draft-statement` | A purchase statement for a trade account |
+| `/draft-price-list` | The trade price list email for a yard |
+| `/draft-buyer-update` | An email to a buyer on where their contract stands |
+| `/import` | Tickets from a ScrapRight export, or a customer list |
+| `/export` | Every table to CSV and JSON with a manifest |
+| `/customise` | Add a field, a grade family or your state's rules, in plain language |
+| `/new-view` | Add a read-only page to `npm run view` |
+| `/audit`, `/imports`, `/help` | What changed and who changed it, what was imported, every command |
+
+Every CLI command takes `--json`. Records match on code or any part of the name; an ambiguous name lists the candidates and exits 1. Nothing sends and nothing pays: every letter, statement and register is written to `drafts/` for a person to deal with.
+
+`npm run view` renders three read-only pages (the week, stock and contracts, the price board) in your colours from `brand.json`. `npm run docs` renders a weighbridge ticket for each recent ticket, a purchase statement for each trade account and a load-out sheet for each recent load.
+
+## Ten questions ScrapRight's screens do not answer for you
+
+Each is one command against your own records today.
+
+1. Which tickets would fail a police inspection today, and why? `compliance`
+2. Which copper can we cut or bale this week, and which has to wait, to the day? `held`
+3. Which public sellers have brought in copper four or more times this month? `seller-watch`
+4. Are we going to fill each export contract by its date, with what is in the yards now? `contracts`
+5. How many tonnes do we need to buy in, and how fast, to make that date? `contracts`
+6. What did each grade cost us and sell for over the last month, per tonne? `margin`
+7. Which grades have sat in a yard for 45 days, and how much money is tied up? `stale-stock`
+8. Which yard took cash yesterday, and was any of it for a grade the law says cannot be paid in cash? `day-end`, `compliance`
+9. Which prices on the board have not moved in three weeks? `attention`
+10. Which yard's dealer licence runs out next? `compliance`
+
+## Your first hour: ten things to ask for
+
+1. "Put our yard's name and colours in brand.json."
+2. "Run the attention list on the demo and explain each row."
+3. "Which copper is on hold, and when can each lot be baled?"
+4. "Clear the demo and set up our yards, licences and grades."
+5. "Set today's price board for the Auckland yard from this list."
+6. "Map our ScrapRight ticket export and dry-run it."
+7. "Import our customers and check who has no ID on file."
+8. "Add our open export contracts and the containers already shipped."
+9. "Add the Queensland rules for our Brisbane yard to the compliance check."
+10. "Set up a shared database with backups for the office and the weighbridge."
 
 ## Instead of ScrapRight
 
-<!-- TODO(author): how to bring data across from ScrapRight; link docs/replace-scrapright.md -->
+Export tickets and customers from ScrapRight as CSV and run `npm run scrap -- import scrapright tickets.csv --site=AKL --dry-run`. The column names ScrapRight-style exports use are read out of the box, a US export in pounds takes `--unit=lb`, and anything else takes a one-line mapping. The full guide, including what does not carry over, is [docs/replace-scrapright.md](docs/replace-scrapright.md).
 
 ## Architecture
 
@@ -92,7 +164,9 @@ scrap-yard-for-claude-code/
   scripts/lib/db.mjs        one adapter: DATABASE_URL (pg) or embedded PGlite
   supabase/migrations/      plain SQL schema
   supabase/seed.sql         demo data
-  docs/                     the thesis and the migration guide
+  docs/                     compliance rules, the ScrapRight guide, why no front end
+  views.json, documents.json the read-only pages and the paperwork
+  examples/                 a ScrapRight-style ticket export and a customer list
 ```
 
 ## Built for coding agents

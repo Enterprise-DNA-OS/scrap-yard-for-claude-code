@@ -1,11 +1,33 @@
 [
   {
-    "name": "example",
-    "title": "TODO(author): the first document this industry must produce",
-    "for_each": "select gen_random_uuid() as id, 'Example' as name",
+    "name": "weigh-ticket",
+    "title": "Weighbridge ticket",
+    "for_each": "select id, code from tickets where status <> 'void' and received_on >= current_date - 14 order by code",
+    "file": "code",
+    "sections": [
+      { "title": "Ticket", "layout": "record", "sql": "select t.code as ticket, s.name as yard, s.licence_no as dealer_licence, t.received_on, t.received_at, se.name as seller, se.business_name, se.address, se.id_type, se.id_number, t.seller_vehicle_rego, t.operator, t.status, t.payment_method, t.payment_ref from tickets t join sites s on s.id = t.site_id join sellers se on se.id = t.seller_id where t.id = $1" },
+      { "title": "Weighed", "sql": "select l.line_no, g.name as grade, l.description, l.gross_kg, l.tare_kg, l.gross_kg - l.tare_kg as net_kg, l.cents_per_tonne as per_tonne_cents, l.amount_cents, l.vehicle_vin, l.item_no from ticket_lines l join grades g on g.id = l.grade_id where l.ticket_id = $1 order by l.line_no" },
+      { "title": "Seller declaration", "note": "I declare I own these goods or have the owner's authority to sell them.", "layout": "record", "sql": "select case when t.seller_signed then 'signed at the weighbridge' else 'NOT SIGNED' end as signature from tickets t where t.id = $1" }
+    ]
+  },
+  {
+    "name": "trade-statement",
+    "title": "Purchase statement",
+    "for_each": "select id, name from sellers where kind = 'trade' order by code",
     "file": "name",
     "sections": [
-      { "title": "Details", "sql": "select 'replace me' as item, $1::text as record_id" }
+      { "title": "Account", "layout": "record", "sql": "select name, business_name, business_no, address, email from sellers where id = $1" },
+      { "title": "Bought in the last 30 days", "sql": "select l.ticket, l.received_on, l.site, l.grade_name, l.net_kg, l.cents_per_tonne as per_tonne_cents, l.amount_cents, l.status from line_detail l join sellers s on s.code = l.seller_code where s.id = $1 and l.received_on >= current_date - 30 order by l.received_on, l.ticket" }
+    ]
+  },
+  {
+    "name": "load-out-sheet",
+    "title": "Load-out sheet",
+    "for_each": "select id, code from loads where shipped_on >= current_date - 30 order by code",
+    "file": "code",
+    "sections": [
+      { "title": "Load", "layout": "record", "sql": "select l.code as load, s.name as yard, b.name as buyer, c.code as contract, g.name as grade, l.shipped_on, l.container_no, l.seal_no, l.net_kg, l.cents_per_tonne as per_tonne_cents, l.amount_cents from loads l join sites s on s.id = l.site_id join buyers b on b.id = l.buyer_id join grades g on g.id = l.grade_id left join contracts c on c.id = l.contract_id where l.id = $1" },
+      { "title": "Contract position after this load", "sql": "select p.code, p.tonnes, p.shipped_t, p.remaining_t, p.deliver_by from contract_position p join contracts c on c.code = p.code join loads l on l.contract_id = c.id where l.id = $1" }
     ]
   }
 ]

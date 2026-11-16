@@ -1,0 +1,5 @@
+Ticket #,Ticket Date,Customer,Company,Customer Type,Address,DOB,ID Type,ID Number,Material,Gross,Tare,Net,Price,Amount,Payment Type,Check #,VIN
+SR-70001,03/11/2026,Tony Marsh,,Retail,"12 King Street, Penrose, Auckland",14/02/1980,NZ driver licence,DA112233,Heavy melting steel 1 and 2,820,60,760,0.38,288.80,EFT,EFT 1001,
+SR-70001,03/11/2026,Tony Marsh,,Retail,"12 King Street, Penrose, Auckland",14/02/1980,NZ driver licence,DA112233,"Copper, No. 2",45,0,45,10.50,472.50,EFT,EFT 1001,
+SR-70002,04/11/2026,Ana Lee,Hutt Valley Plumbing Ltd,Commercial,"4 Railway Avenue, Lower Hutt",02/07/1985,NZ driver licence,DC445566,Brass Radiators,300,0,300,5.10,1530.00,Cheque,100234,
+SR-70003,05/11/2026,Tony Marsh,,Retail,"12 King Street, Penrose, Auckland",14/02/1980,NZ driver licence,DA112233,Car Body,980,0,980,0.20,196.00,,,7AT0ABC1234567890

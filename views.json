@@ -1,14 +1,32 @@
 [
   {
     "name": "week",
-    "title": "This week",
-    "subtitle": "Scrap Yard for Claude Code: what needs attention, rendered by npm run view",
+    "title": "This week across the yards",
+    "subtitle": "Breaches, holds, money waiting and contracts, rendered by npm run view",
     "sections": [
-      {
-        "title": "Needs attention",
-        "note": "TODO(author): point this at the industry's attention view (overdue, stuck, quiet).",
-        "sql": "select 'replace me' as item, 'TODO(author)' as why"
-      }
+      { "title": "Rule checks", "note": "Each row cites its rule. Sources in docs/compliance.md.", "sql": "select rule, record, detail, due_on, days_left, source from compliance_findings order by rule, record" },
+      { "title": "Goods on hold", "sql": "select ticket, line_no, site, seller, grade, net_kg, item_no, hold_until, days_left, state_now from held_items where released_on is null order by hold_until" },
+      { "title": "Weighed and not paid", "sql": "select ticket, site, received_on, days_waiting, seller, net_kg, amount_cents from unpaid_tickets order by days_waiting desc" },
+      { "title": "Sellers worth a second look", "sql": "select seller_code, seller, tickets_30d, copper_tickets_30d, copper_kg_30d, reason from seller_watch order by copper_tickets_30d desc" }
+    ]
+  },
+  {
+    "name": "yard",
+    "title": "Stock, contracts and margin",
+    "subtitle": "What is in the yards, what is sold forward, and what each grade made",
+    "sections": [
+      { "title": "Open contracts", "sql": "select code, buyer, grade, tonnes, deliver_by, days_left, shipped_t, remaining_t, in_yard_t from contract_position order by deliver_by" },
+      { "title": "Yard stock", "sql": "select site, grade, grade_name, on_hand_kg, avg_cost_cents_per_tonne as avg_cost_per_tonne_cents, days_since_moved from yard_stock where on_hand_kg > 0 order by site, on_hand_kg desc" },
+      { "title": "Margin by grade, last 30 days", "sql": "select grade, grade_name, bought_kg, avg_buy_cents_per_tonne as avg_buy_per_tonne_cents, sold_kg, avg_sell_cents_per_tonne as avg_sell_per_tonne_cents, margin_cents_per_tonne as margin_per_tonne_cents from grade_margin order by grade" }
+    ]
+  },
+  {
+    "name": "prices",
+    "title": "Price board",
+    "subtitle": "Today's buy prices at every yard",
+    "sections": [
+      { "title": "Public prices", "sql": "select site, grade, grade_name, cents_per_tonne as per_tonne_cents, effective_on, days_old from current_prices where seller_kind = 'public' order by site, family, grade" },
+      { "title": "Trade prices", "sql": "select site, grade, grade_name, cents_per_tonne as per_tonne_cents, effective_on, days_old from current_prices where seller_kind = 'trade' order by site, family, grade" }
     ]
   }
 ]
